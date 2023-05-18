@@ -6,8 +6,6 @@
 #include <map>
 #include <models/User.h>
 
-#include <core/utils.hpp>
-
 using namespace std;
 
 class LoginUser {
@@ -34,15 +32,11 @@ private:
     {
     }
 
-    static UserManager* instance;
-
 public:
-    const UserManager* instance() noexcept
+    static UserManager* instance() noexcept
     {
-        if (this->instance == nullptr) {
-            this->instance = new UserManager();
-        }
-        return this->instance;
+        static UserManager* instance = new UserManager();
+        return instance;
     }
 
     bool verify_token(const string& token) const

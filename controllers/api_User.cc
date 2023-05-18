@@ -1,5 +1,6 @@
 #include "api_User.h"
 #include "utils.hpp"
+#include <UserManager.hpp>
 
 // Add definition of your processing function here
 using namespace api;
@@ -13,10 +14,9 @@ void User::login(const HttpRequestPtr& req,
         callback(badRequest());
         return;
     }
-
+    auto token = UserManager::instance()->login(username, password);
     Json::Value ret;
-    ret["result"] = 200;
-    ret["token"] = "test11";
+    ret["token"] = token;
     auto resp = HttpResponse::newHttpJsonResponse(ret);
     callback(resp);
 }
