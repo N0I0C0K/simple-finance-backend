@@ -1,0 +1,49 @@
+@baseurl= http://127.0.0.1:6110
+@username= test1
+@password= 123
+@token = BA946FEA-9F01-4088-82EE-8EA631C81D10
+
+
+###
+GET {{baseurl}}/api/user/login?username={{username}}&password={{password}}
+
+###
+
+GET {{baseurl}}/api/user/info
+token: {{token}}
+
+###
+POST  {{baseurl}}/api/user/register
+content-type: application/json
+
+{
+    "username": "test1",
+    "password": "123",
+}
+
+###
+POST {{baseurl}}/api/user/save_money
+content-type: application/json
+token: {{token}}
+
+{
+    "money":1000
+}
+
+### 
+POST {{baseurl}}/api/user/withdraw_money
+content-type: application/json
+token: {{token}}
+
+{
+    "money":1000
+}
+
+###
+POST {{baseurl}}/api/user/money_deal
+content-type: application/json
+token: {{token}}
+
+{
+    "money":100
+}

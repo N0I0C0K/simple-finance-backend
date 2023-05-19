@@ -3,7 +3,7 @@
 #include <UserManager.hpp>
 
 // Add definition of your processing function here
-using namespace api;
+namespace api {
 
 void User::login(
     const HttpRequestPtr& req,
@@ -15,9 +15,30 @@ void User::login(
         callback(badRequest());
         return;
     }
-    auto token = UserManager::instance()->login(username, password);
+    try {
+        auto token = UserManager::instance()->login(username, password);
+        Json::Value ret;
+        ret["token"] = token;
+        auto resp = HttpResponse::newHttpJsonResponse(ret);
+        callback(resp);
+    } catch (const std::exception& e) {
+        LOG_DEBUG << e.what();
+        callback(badRequest());
+    }
+}
+
+void User::user_info(
+    const HttpRequestPtr& req,
+    std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    auto token = req->getHeader("token");
+    auto user = UserManager::instance()->get_user(token);
     Json::Value ret;
-    ret["token"] = token;
+    ret["username"] = *user.getUsername();
+    ret["balance"] = *user.getBalance();
+    ret["lastDealTime"] = *user.getLastdealtime();
+    ret["interest"] = *user.getInterest();
+
     auto resp = HttpResponse::newHttpJsonResponse(ret);
     callback(resp);
 }
@@ -26,7 +47,7 @@ void User::register_user(
     const HttpRequestPtr& req,
     std::function<void(const HttpResponsePtr&)>&& callback)
 {
-    auto json = *(req->getJsonObject());
+    auto&& json = *(req->getJsonObject());
     auto username = json["username"].asString();
     auto password = json["password"].asString();
 
@@ -47,23 +68,102 @@ void User::money_deal(
     const HttpRequestPtr& req,
     std::function<void(const HttpResponsePtr&)>&& callback)
 {
-    auto json = *(req->getJsonObject());
-    auto fromUser = json["fromUser"].asString();
+    auto jsonptr = req->getJsonObject();
+    if (jsonptr == nullptr) {
+        callback(badRequest());
+        return;
+    }
+    auto&& json = *(jsonptr);
+    auto fromUser = UserManager::instance()->get_user(req->getHeader("token"));
     string toUser = "";
     if (json.isMember("toUser")) {
         toUser = json["toUser"].asString();
     }
-    auto balance = json["balance"].asDouble();
+    auto money = json["money"].asDouble();
 
-    if (fromUser.length() == 0 || balance <= 0) {
+    if (money <= 0) {
         callback(badRequest());
         return;
     }
 
-    UserManager::instance()->money_deal(fromUser, toUser, balance);
+    try {
+        UserManager::instance()->money_deal(*fromUser.getUsername(), toUser, money);
+    } catch (const std::exception& e) {
+        LOG_DEBUG << e.what();
+        callback(badRequest(e.what()));
+        return;
+    }
 
-    auto resp = HttpResponse::newHttpResponse();
-    resp->setStatusCode(k200OK);
-    resp->setBody("OK");
+    Json::Value ret;
+    ret["code"] = 0;
+    ret["msg"] = "success";
+
+    auto resp = HttpResponse::newHttpJsonResponse(ret);
     callback(resp);
 }
+
+void User::save_money(
+    const HttpRequestPtr& req,
+    std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    auto jsonptr = req->getJsonObject();
+    if (jsonptr == nullptr) {
+        callback(badRequest());
+        return;
+    }
+    auto&& json = *(jsonptr);
+    auto user = UserManager::instance()->get_user(req->getHeader("token"));
+    auto money = json["money"].asDouble();
+
+    if (money <= 0) {
+        callback(badRequest());
+        return;
+    }
+
+    try {
+        UserManager::instance()->userSaveMoney(*user.getUsername(), money);
+    } catch (const std::exception& e) {
+        LOG_DEBUG << e.what();
+        callback(badRequest(e.what()));
+        return;
+    }
+
+    Json::Value ret;
+    ret["code"] = 0;
+    ret["msg"] = "success";
+    ret["balance"] = *user.getBalance() + money;
+
+    auto resp = HttpResponse::newHttpJsonResponse(ret);
+    callback(resp);
+}
+
+void User::withdraw_money(
+    const HttpRequestPtr& req,
+    std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    auto json = *(req->getJsonObject());
+    auto user = UserManager::instance()->get_user(req->getHeader("token"));
+    auto money = json["money"].asDouble();
+
+    if (money <= 0) {
+        callback(badRequest());
+        return;
+    }
+    try {
+        UserManager::instance()->userWithdrawMoney(*user.getUsername(), money);
+    } catch (const std::exception& e) {
+        LOG_DEBUG << e.what();
+        callback(badRequest(e.what()));
+        return;
+    }
+
+    Json::Value ret;
+    ret["code"] = 0;
+    ret["msg"] = "success";
+    ret["balance"] = *user.getBalance() - money;
+
+    auto resp = HttpResponse::newHttpJsonResponse(ret);
+    callback(resp);
+}
+
+};

@@ -1,4 +1,4 @@
 {
   "rdbms": "Sqlite3",
-  "filename": "./models/server.db"
+  "filename": "./server.db"
 }

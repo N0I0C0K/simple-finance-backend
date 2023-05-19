@@ -16,8 +16,9 @@ using namespace drogon_model::sqlite3;
 const std::string Record::Cols::_id = "id";
 const std::string Record::Cols::_fromUserId = "fromUserId";
 const std::string Record::Cols::_toUserId = "toUserId";
-const std::string Record::Cols::_balance = "balance";
+const std::string Record::Cols::_money = "money";
 const std::string Record::Cols::_dealTime = "dealTime";
+const std::string Record::Cols::_comment = "comment";
 const std::string Record::primaryKeyName = "id";
 const bool Record::hasPrimaryKey = true;
 const std::string Record::tableName = "record";
@@ -26,8 +27,9 @@ const std::vector<typename Record::MetaData> Record::metaData_={
 {"id","std::string","text",0,0,1,1},
 {"fromUserId","std::string","text",0,0,0,1},
 {"toUserId","std::string","text",0,0,0,0},
-{"balance","double","real",8,0,0,1},
-{"dealTime","uint64_t","integer unsigned",8,0,0,1}
+{"money","double","real",8,0,0,1},
+{"dealTime","uint64_t","integer unsigned",8,0,0,1},
+{"comment","std::string","text",0,0,0,0}
 };
 const std::string &Record::getColumnName(size_t index) noexcept(false)
 {
@@ -50,19 +52,23 @@ Record::Record(const Row &r, const ssize_t indexOffset) noexcept
         {
             touserid_=std::make_shared<std::string>(r["toUserId"].as<std::string>());
         }
-        if(!r["balance"].isNull())
+        if(!r["money"].isNull())
         {
-            balance_=std::make_shared<double>(r["balance"].as<double>());
+            money_=std::make_shared<double>(r["money"].as<double>());
         }
         if(!r["dealTime"].isNull())
         {
             dealtime_=std::make_shared<uint64_t>(r["dealTime"].as<uint64_t>());
         }
+        if(!r["comment"].isNull())
+        {
+            comment_=std::make_shared<std::string>(r["comment"].as<std::string>());
+        }
     }
     else
     {
         size_t offset = (size_t)indexOffset;
-        if(offset + 5 > r.size())
+        if(offset + 6 > r.size())
         {
             LOG_FATAL << "Invalid SQL result for this model";
             return;
@@ -86,12 +92,17 @@ Record::Record(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 3;
         if(!r[index].isNull())
         {
-            balance_=std::make_shared<double>(r[index].as<double>());
+            money_=std::make_shared<double>(r[index].as<double>());
         }
         index = offset + 4;
         if(!r[index].isNull())
         {
             dealtime_=std::make_shared<uint64_t>(r[index].as<uint64_t>());
+        }
+        index = offset + 5;
+        if(!r[index].isNull())
+        {
+            comment_=std::make_shared<std::string>(r[index].as<std::string>());
         }
     }
 
@@ -99,7 +110,7 @@ Record::Record(const Row &r, const ssize_t indexOffset) noexcept
 
 Record::Record(const Json::Value &pJson, const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 6)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -133,7 +144,7 @@ Record::Record(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            balance_=std::make_shared<double>(pJson[pMasqueradingVector[3]].asDouble());
+            money_=std::make_shared<double>(pJson[pMasqueradingVector[3]].asDouble());
         }
     }
     if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
@@ -142,6 +153,14 @@ Record::Record(const Json::Value &pJson, const std::vector<std::string> &pMasque
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
             dealtime_=std::make_shared<uint64_t>((uint64_t)pJson[pMasqueradingVector[4]].asUInt64());
+        }
+    }
+    if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
+    {
+        dirtyFlag_[5] = true;
+        if(!pJson[pMasqueradingVector[5]].isNull())
+        {
+            comment_=std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
         }
     }
 }
@@ -172,12 +191,12 @@ Record::Record(const Json::Value &pJson) noexcept(false)
             touserid_=std::make_shared<std::string>(pJson["toUserId"].asString());
         }
     }
-    if(pJson.isMember("balance"))
+    if(pJson.isMember("money"))
     {
         dirtyFlag_[3]=true;
-        if(!pJson["balance"].isNull())
+        if(!pJson["money"].isNull())
         {
-            balance_=std::make_shared<double>(pJson["balance"].asDouble());
+            money_=std::make_shared<double>(pJson["money"].asDouble());
         }
     }
     if(pJson.isMember("dealTime"))
@@ -188,12 +207,20 @@ Record::Record(const Json::Value &pJson) noexcept(false)
             dealtime_=std::make_shared<uint64_t>((uint64_t)pJson["dealTime"].asUInt64());
         }
     }
+    if(pJson.isMember("comment"))
+    {
+        dirtyFlag_[5]=true;
+        if(!pJson["comment"].isNull())
+        {
+            comment_=std::make_shared<std::string>(pJson["comment"].asString());
+        }
+    }
 }
 
 void Record::updateByMasqueradedJson(const Json::Value &pJson,
                                             const std::vector<std::string> &pMasqueradingVector) noexcept(false)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 6)
     {
         LOG_ERROR << "Bad masquerading vector";
         return;
@@ -226,7 +253,7 @@ void Record::updateByMasqueradedJson(const Json::Value &pJson,
         dirtyFlag_[3] = true;
         if(!pJson[pMasqueradingVector[3]].isNull())
         {
-            balance_=std::make_shared<double>(pJson[pMasqueradingVector[3]].asDouble());
+            money_=std::make_shared<double>(pJson[pMasqueradingVector[3]].asDouble());
         }
     }
     if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
@@ -235,6 +262,14 @@ void Record::updateByMasqueradedJson(const Json::Value &pJson,
         if(!pJson[pMasqueradingVector[4]].isNull())
         {
             dealtime_=std::make_shared<uint64_t>((uint64_t)pJson[pMasqueradingVector[4]].asUInt64());
+        }
+    }
+    if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
+    {
+        dirtyFlag_[5] = true;
+        if(!pJson[pMasqueradingVector[5]].isNull())
+        {
+            comment_=std::make_shared<std::string>(pJson[pMasqueradingVector[5]].asString());
         }
     }
 }
@@ -264,12 +299,12 @@ void Record::updateByJson(const Json::Value &pJson) noexcept(false)
             touserid_=std::make_shared<std::string>(pJson["toUserId"].asString());
         }
     }
-    if(pJson.isMember("balance"))
+    if(pJson.isMember("money"))
     {
         dirtyFlag_[3] = true;
-        if(!pJson["balance"].isNull())
+        if(!pJson["money"].isNull())
         {
-            balance_=std::make_shared<double>(pJson["balance"].asDouble());
+            money_=std::make_shared<double>(pJson["money"].asDouble());
         }
     }
     if(pJson.isMember("dealTime"))
@@ -278,6 +313,14 @@ void Record::updateByJson(const Json::Value &pJson) noexcept(false)
         if(!pJson["dealTime"].isNull())
         {
             dealtime_=std::make_shared<uint64_t>((uint64_t)pJson["dealTime"].asUInt64());
+        }
+    }
+    if(pJson.isMember("comment"))
+    {
+        dirtyFlag_[5] = true;
+        if(!pJson["comment"].isNull())
+        {
+            comment_=std::make_shared<std::string>(pJson["comment"].asString());
         }
     }
 }
@@ -358,20 +401,20 @@ void Record::setTouseridToNull() noexcept
     dirtyFlag_[2] = true;
 }
 
-const double &Record::getValueOfBalance() const noexcept
+const double &Record::getValueOfMoney() const noexcept
 {
     const static double defaultValue = double();
-    if(balance_)
-        return *balance_;
+    if(money_)
+        return *money_;
     return defaultValue;
 }
-const std::shared_ptr<double> &Record::getBalance() const noexcept
+const std::shared_ptr<double> &Record::getMoney() const noexcept
 {
-    return balance_;
+    return money_;
 }
-void Record::setBalance(const double &pBalance) noexcept
+void Record::setMoney(const double &pMoney) noexcept
 {
-    balance_ = std::make_shared<double>(pBalance);
+    money_ = std::make_shared<double>(pMoney);
     dirtyFlag_[3] = true;
 }
 
@@ -392,6 +435,33 @@ void Record::setDealtime(const uint64_t &pDealtime) noexcept
     dirtyFlag_[4] = true;
 }
 
+const std::string &Record::getValueOfComment() const noexcept
+{
+    const static std::string defaultValue = std::string();
+    if(comment_)
+        return *comment_;
+    return defaultValue;
+}
+const std::shared_ptr<std::string> &Record::getComment() const noexcept
+{
+    return comment_;
+}
+void Record::setComment(const std::string &pComment) noexcept
+{
+    comment_ = std::make_shared<std::string>(pComment);
+    dirtyFlag_[5] = true;
+}
+void Record::setComment(std::string &&pComment) noexcept
+{
+    comment_ = std::make_shared<std::string>(std::move(pComment));
+    dirtyFlag_[5] = true;
+}
+void Record::setCommentToNull() noexcept
+{
+    comment_.reset();
+    dirtyFlag_[5] = true;
+}
+
 void Record::updateId(const uint64_t id)
 {
 }
@@ -402,8 +472,9 @@ const std::vector<std::string> &Record::insertColumns() noexcept
         "id",
         "fromUserId",
         "toUserId",
-        "balance",
-        "dealTime"
+        "money",
+        "dealTime",
+        "comment"
     };
     return inCols;
 }
@@ -445,9 +516,9 @@ void Record::outputArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[3])
     {
-        if(getBalance())
+        if(getMoney())
         {
-            binder << getValueOfBalance();
+            binder << getValueOfMoney();
         }
         else
         {
@@ -459,6 +530,17 @@ void Record::outputArgs(drogon::orm::internal::SqlBinder &binder) const
         if(getDealtime())
         {
             binder << getValueOfDealtime();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[5])
+    {
+        if(getComment())
+        {
+            binder << getValueOfComment();
         }
         else
         {
@@ -489,6 +571,10 @@ const std::vector<std::string> Record::updateColumns() const
     if(dirtyFlag_[4])
     {
         ret.push_back(getColumnName(4));
+    }
+    if(dirtyFlag_[5])
+    {
+        ret.push_back(getColumnName(5));
     }
     return ret;
 }
@@ -530,9 +616,9 @@ void Record::updateArgs(drogon::orm::internal::SqlBinder &binder) const
     }
     if(dirtyFlag_[3])
     {
-        if(getBalance())
+        if(getMoney())
         {
-            binder << getValueOfBalance();
+            binder << getValueOfMoney();
         }
         else
         {
@@ -544,6 +630,17 @@ void Record::updateArgs(drogon::orm::internal::SqlBinder &binder) const
         if(getDealtime())
         {
             binder << getValueOfDealtime();
+        }
+        else
+        {
+            binder << nullptr;
+        }
+    }
+    if(dirtyFlag_[5])
+    {
+        if(getComment())
+        {
+            binder << getValueOfComment();
         }
         else
         {
@@ -578,13 +675,13 @@ Json::Value Record::toJson() const
     {
         ret["toUserId"]=Json::Value();
     }
-    if(getBalance())
+    if(getMoney())
     {
-        ret["balance"]=getValueOfBalance();
+        ret["money"]=getValueOfMoney();
     }
     else
     {
-        ret["balance"]=Json::Value();
+        ret["money"]=Json::Value();
     }
     if(getDealtime())
     {
@@ -594,6 +691,14 @@ Json::Value Record::toJson() const
     {
         ret["dealTime"]=Json::Value();
     }
+    if(getComment())
+    {
+        ret["comment"]=getValueOfComment();
+    }
+    else
+    {
+        ret["comment"]=Json::Value();
+    }
     return ret;
 }
 
@@ -601,7 +706,7 @@ Json::Value Record::toMasqueradedJson(
     const std::vector<std::string> &pMasqueradingVector) const
 {
     Json::Value ret;
-    if(pMasqueradingVector.size() == 5)
+    if(pMasqueradingVector.size() == 6)
     {
         if(!pMasqueradingVector[0].empty())
         {
@@ -638,9 +743,9 @@ Json::Value Record::toMasqueradedJson(
         }
         if(!pMasqueradingVector[3].empty())
         {
-            if(getBalance())
+            if(getMoney())
             {
-                ret[pMasqueradingVector[3]]=getValueOfBalance();
+                ret[pMasqueradingVector[3]]=getValueOfMoney();
             }
             else
             {
@@ -656,6 +761,17 @@ Json::Value Record::toMasqueradedJson(
             else
             {
                 ret[pMasqueradingVector[4]]=Json::Value();
+            }
+        }
+        if(!pMasqueradingVector[5].empty())
+        {
+            if(getComment())
+            {
+                ret[pMasqueradingVector[5]]=getValueOfComment();
+            }
+            else
+            {
+                ret[pMasqueradingVector[5]]=Json::Value();
             }
         }
         return ret;
@@ -685,13 +801,13 @@ Json::Value Record::toMasqueradedJson(
     {
         ret["toUserId"]=Json::Value();
     }
-    if(getBalance())
+    if(getMoney())
     {
-        ret["balance"]=getValueOfBalance();
+        ret["money"]=getValueOfMoney();
     }
     else
     {
-        ret["balance"]=Json::Value();
+        ret["money"]=Json::Value();
     }
     if(getDealtime())
     {
@@ -700,6 +816,14 @@ Json::Value Record::toMasqueradedJson(
     else
     {
         ret["dealTime"]=Json::Value();
+    }
+    if(getComment())
+    {
+        ret["comment"]=getValueOfComment();
+    }
+    else
+    {
+        ret["comment"]=Json::Value();
     }
     return ret;
 }
@@ -731,14 +855,14 @@ bool Record::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(2, "toUserId", pJson["toUserId"], err, true))
             return false;
     }
-    if(pJson.isMember("balance"))
+    if(pJson.isMember("money"))
     {
-        if(!validJsonOfField(3, "balance", pJson["balance"], err, true))
+        if(!validJsonOfField(3, "money", pJson["money"], err, true))
             return false;
     }
     else
     {
-        err="The balance column cannot be null";
+        err="The money column cannot be null";
         return false;
     }
     if(pJson.isMember("dealTime"))
@@ -751,13 +875,18 @@ bool Record::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         err="The dealTime column cannot be null";
         return false;
     }
+    if(pJson.isMember("comment"))
+    {
+        if(!validJsonOfField(5, "comment", pJson["comment"], err, true))
+            return false;
+    }
     return true;
 }
 bool Record::validateMasqueradedJsonForCreation(const Json::Value &pJson,
                                                 const std::vector<std::string> &pMasqueradingVector,
                                                 std::string &err)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 6)
     {
         err = "Bad masquerading vector";
         return false;
@@ -823,6 +952,14 @@ bool Record::validateMasqueradedJsonForCreation(const Json::Value &pJson,
             return false;
         }
       }
+      if(!pMasqueradingVector[5].empty())
+      {
+          if(pJson.isMember(pMasqueradingVector[5]))
+          {
+              if(!validJsonOfField(5, pMasqueradingVector[5], pJson[pMasqueradingVector[5]], err, true))
+                  return false;
+          }
+      }
     }
     catch(const Json::LogicError &e)
     {
@@ -853,14 +990,19 @@ bool Record::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(2, "toUserId", pJson["toUserId"], err, false))
             return false;
     }
-    if(pJson.isMember("balance"))
+    if(pJson.isMember("money"))
     {
-        if(!validJsonOfField(3, "balance", pJson["balance"], err, false))
+        if(!validJsonOfField(3, "money", pJson["money"], err, false))
             return false;
     }
     if(pJson.isMember("dealTime"))
     {
         if(!validJsonOfField(4, "dealTime", pJson["dealTime"], err, false))
+            return false;
+    }
+    if(pJson.isMember("comment"))
+    {
+        if(!validJsonOfField(5, "comment", pJson["comment"], err, false))
             return false;
     }
     return true;
@@ -869,7 +1011,7 @@ bool Record::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
                                               const std::vector<std::string> &pMasqueradingVector,
                                               std::string &err)
 {
-    if(pMasqueradingVector.size() != 5)
+    if(pMasqueradingVector.size() != 6)
     {
         err = "Bad masquerading vector";
         return false;
@@ -903,6 +1045,11 @@ bool Record::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
       if(!pMasqueradingVector[4].empty() && pJson.isMember(pMasqueradingVector[4]))
       {
           if(!validJsonOfField(4, pMasqueradingVector[4], pJson[pMasqueradingVector[4]], err, false))
+              return false;
+      }
+      if(!pMasqueradingVector[5].empty() && pJson.isMember(pMasqueradingVector[5]))
+      {
+          if(!validJsonOfField(5, pMasqueradingVector[5], pJson[pMasqueradingVector[5]], err, false))
               return false;
       }
     }
@@ -975,6 +1122,17 @@ bool Record::validJsonOfField(size_t index,
                 return false;
             }
             if(!pJson.isUInt64())
+            {
+                err="Type error in the "+fieldName+" field";
+                return false;
+            }
+            break;
+        case 5:
+            if(pJson.isNull())
+            {
+                return true;
+            }
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;

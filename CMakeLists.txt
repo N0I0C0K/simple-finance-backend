@@ -80,6 +80,13 @@ target_sources(${PROJECT_NAME}
     ${MODEL_SRC}
     ${CORE_SRC})
 
+file(COPY ${PROJECT_SOURCE_DIR}/config.json
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
+file(COPY ${PROJECT_SOURCE_DIR}/server.db
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 # ##############################################################################
 # uncomment the following line for dynamically loading views
 # set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)
