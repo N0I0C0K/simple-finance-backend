@@ -26,18 +26,18 @@ class UserManager {
 private:
     /* data */
     map<string, shared_ptr<LoginUser>> token_dic;
+
+public:
     UserManager()
     {
     }
     ~UserManager()
     {
     }
-
-public:
-    static UserManager* instance() noexcept
+    static shared_ptr<UserManager> instance() noexcept
     {
-        static UserManager* instance = new UserManager();
-        return instance;
+        static shared_ptr<UserManager> s_instance = make_shared<UserManager>();
+        return s_instance;
     }
 
     bool verify_token(const string& token) const
@@ -51,7 +51,7 @@ public:
         using DUser = drogon_model::sqlite3::User;
         auto db = drogon::app().getDbClient();
         Mapper<DUser> mp(db);
-        auto target = mp.findOne(Criteria(DUser::Cols::_name, CompareOperator::EQ, username));
+        auto target = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, username));
         if (*target.getPassword() != password) {
             throw exception("password eror");
         }
@@ -61,22 +61,22 @@ public:
         return token;
     }
 
-    string user_register(const string& name, const string& password)
+    string user_register(const string& username, const string& password)
     {
         using namespace drogon::orm;
         using DUser = drogon_model::sqlite3::User;
         auto db = drogon::app().getDbClient();
         Mapper<DUser> mp(db);
-        if (mp.count(Criteria(DUser::Cols::_name, CompareOperator::EQ, name))) {
+        if (mp.count(Criteria(DUser::Cols::_username, CompareOperator::EQ, username))) {
             throw exception("user already exists");
         }
         DUser new_user;
         new_user.setId(drogon::utils::getUuid());
         new_user.setLastdealtime(time(nullptr));
-        new_user.setName(name);
+        new_user.setUsername(username);
         new_user.setPassword(password);
         mp.insert(new_user);
-        return login(name, password);
+        return login(username, password);
     }
 
     /// @brief 交易
@@ -89,16 +89,48 @@ public:
         using DUser = drogon_model::sqlite3::User;
         auto db = drogon::app().getDbClient();
         Mapper<DUser> mp(db);
-        auto from = mp.findOne(Criteria(DUser::Cols::_name, CompareOperator::EQ, fromUser));
+        auto from = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, fromUser));
         if (*from.getBalance() < balance) {
             throw exception("balance not enough");
         }
         from.setBalance(*from.getBalance() - balance);
+
         if (toUser.length() != 0) {
-            auto to = mp.findOne(Criteria(DUser::Cols::_name, CompareOperator::EQ, toUser));
+            auto to = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, toUser));
             to.setBalance(*to.getBalance() + balance);
+            calculateInterest(to);
             mp.update(to);
         }
+
+        calculateInterest(from);
         mp.update(from);
+    }
+
+    void logout(const string& token)
+    {
+        token_dic.erase(token);
+    }
+
+    void calculateInterest(drogon_model::sqlite3::User& user)
+    {
+        auto now = time(nullptr);
+        auto last = *user.getLastdealtime();
+        auto diff = now - last;
+        auto interest = diff * (*user.getBalance()) * 0.0001;
+        user.setInterest(*user.getInterest() + interest);
+        user.setLastdealtime(now);
+    }
+
+    void settlementAllUserInterest()
+    {
+        using namespace drogon::orm;
+        using DUser = drogon_model::sqlite3::User;
+        auto db = drogon::app().getDbClient();
+        Mapper<DUser> mp(db);
+        auto all = mp.findAll();
+        for (auto& user : all) {
+            calculateInterest(user);
+            mp.update(user);
+        }
     }
 };

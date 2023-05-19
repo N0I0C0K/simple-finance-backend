@@ -42,19 +42,20 @@ class User
   public:
     struct Cols
     {
-        static const std::string _name;
+        static const std::string _id;
+        static const std::string _username;
         static const std::string _password;
         static const std::string _balance;
         static const std::string _lastDealTime;
-        static const std::string _id;
+        static const std::string _interest;
     };
 
     const static int primaryKeyNumber;
     const static std::string tableName;
     const static bool hasPrimaryKey;
     const static std::string primaryKeyName;
-    using PrimaryKeyType = void;
-    int getPrimaryKey() const { assert(false); return 0; }
+    using PrimaryKeyType = std::string;
+    const PrimaryKeyType &getPrimaryKey() const;
 
     /**
      * @brief constructor
@@ -98,15 +99,23 @@ class User
                           std::string &err,
                           bool isForCreation);
 
-    /**  For column name  */
-    ///Get the value of the column name, returns the default value if the column is null
-    const std::string &getValueOfName() const noexcept;
+    /**  For column id  */
+    ///Get the value of the column id, returns the default value if the column is null
+    const std::string &getValueOfId() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getName() const noexcept;
-    ///Set the value of the column name
-    void setName(const std::string &pName) noexcept;
-    void setName(std::string &&pName) noexcept;
-    void setNameToNull() noexcept;
+    const std::shared_ptr<std::string> &getId() const noexcept;
+    ///Set the value of the column id
+    void setId(const std::string &pId) noexcept;
+    void setId(std::string &&pId) noexcept;
+
+    /**  For column username  */
+    ///Get the value of the column username, returns the default value if the column is null
+    const std::string &getValueOfUsername() const noexcept;
+    ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
+    const std::shared_ptr<std::string> &getUsername() const noexcept;
+    ///Set the value of the column username
+    void setUsername(const std::string &pUsername) noexcept;
+    void setUsername(std::string &&pUsername) noexcept;
 
     /**  For column password  */
     ///Get the value of the column password, returns the default value if the column is null
@@ -116,7 +125,6 @@ class User
     ///Set the value of the column password
     void setPassword(const std::string &pPassword) noexcept;
     void setPassword(std::string &&pPassword) noexcept;
-    void setPasswordToNull() noexcept;
 
     /**  For column balance  */
     ///Get the value of the column balance, returns the default value if the column is null
@@ -134,20 +142,18 @@ class User
     const std::shared_ptr<uint64_t> &getLastdealtime() const noexcept;
     ///Set the value of the column lastDealTime
     void setLastdealtime(const uint64_t &pLastdealtime) noexcept;
-    void setLastdealtimeToNull() noexcept;
 
-    /**  For column id  */
-    ///Get the value of the column id, returns the default value if the column is null
-    const std::string &getValueOfId() const noexcept;
+    /**  For column interest  */
+    ///Get the value of the column interest, returns the default value if the column is null
+    const double &getValueOfInterest() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<std::string> &getId() const noexcept;
-    ///Set the value of the column id
-    void setId(const std::string &pId) noexcept;
-    void setId(std::string &&pId) noexcept;
-    void setIdToNull() noexcept;
+    const std::shared_ptr<double> &getInterest() const noexcept;
+    ///Set the value of the column interest
+    void setInterest(const double &pInterest) noexcept;
+    void setInterestToNull() noexcept;
 
 
-    static size_t getColumnNumber() noexcept {  return 5;  }
+    static size_t getColumnNumber() noexcept {  return 6;  }
     static const std::string &getColumnName(size_t index) noexcept(false);
 
     Json::Value toJson() const;
@@ -164,11 +170,12 @@ class User
     void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
-    std::shared_ptr<std::string> name_;
+    std::shared_ptr<std::string> id_;
+    std::shared_ptr<std::string> username_;
     std::shared_ptr<std::string> password_;
     std::shared_ptr<double> balance_;
     std::shared_ptr<uint64_t> lastdealtime_;
-    std::shared_ptr<std::string> id_;
+    std::shared_ptr<double> interest_;
     struct MetaData
     {
         const std::string colName_;
@@ -180,17 +187,17 @@ class User
         const bool notNull_;
     };
     static const std::vector<MetaData> metaData_;
-    bool dirtyFlag_[5]={ false };
+    bool dirtyFlag_[6]={ false };
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
-        static const std::string sql="";
+        static const std::string sql="select * from " + tableName + " where id = ?";
         return sql;
     }
 
     static const std::string &sqlForDeletingByPrimaryKey()
     {
-        static const std::string sql="";
+        static const std::string sql="delete from " + tableName + " where id = ?";
         return sql;
     }
     std::string sqlForInserting(bool &needSelection) const
@@ -200,28 +207,41 @@ class User
         needSelection = false;
         if(dirtyFlag_[0])
         {
-            sql += "name,";
+            sql += "id,";
             ++parametersCount;
         }
         if(dirtyFlag_[1])
         {
-            sql += "password,";
+            sql += "username,";
             ++parametersCount;
         }
         if(dirtyFlag_[2])
         {
-            sql += "balance,";
+            sql += "password,";
             ++parametersCount;
         }
         if(dirtyFlag_[3])
         {
-            sql += "lastDealTime,";
+            sql += "balance,";
             ++parametersCount;
+        }
+        if(!dirtyFlag_[3])
+        {
+            needSelection=true;
         }
         if(dirtyFlag_[4])
         {
-            sql += "id,";
+            sql += "lastDealTime,";
             ++parametersCount;
+        }
+        if(dirtyFlag_[5])
+        {
+            sql += "interest,";
+            ++parametersCount;
+        }
+        if(!dirtyFlag_[5])
+        {
+            needSelection=true;
         }
         if(parametersCount > 0)
         {
@@ -252,6 +272,11 @@ class User
 
         }
         if(dirtyFlag_[4])
+        {
+            sql.append("?,");
+
+        }
+        if(dirtyFlag_[5])
         {
             sql.append("?,");
 

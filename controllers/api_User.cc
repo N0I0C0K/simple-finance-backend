@@ -49,9 +49,21 @@ void User::money_deal(
 {
     auto json = *(req->getJsonObject());
     auto fromUser = json["fromUser"].asString();
-    auto toUser = json["toUser"].asString();
+    string toUser = "";
+    if (json.isMember("toUser")) {
+        toUser = json["toUser"].asString();
+    }
     auto balance = json["balance"].asDouble();
+
+    if (fromUser.length() == 0 || balance <= 0) {
+        callback(badRequest());
+        return;
+    }
+
+    UserManager::instance()->money_deal(fromUser, toUser, balance);
+
     auto resp = HttpResponse::newHttpResponse();
-    resp->setBody("money_deal");
+    resp->setStatusCode(k200OK);
+    resp->setBody("OK");
     callback(resp);
 }

@@ -53,8 +53,8 @@ class Record
     const static std::string tableName;
     const static bool hasPrimaryKey;
     const static std::string primaryKeyName;
-    using PrimaryKeyType = void;
-    int getPrimaryKey() const { assert(false); return 0; }
+    using PrimaryKeyType = std::string;
+    const PrimaryKeyType &getPrimaryKey() const;
 
     /**
      * @brief constructor
@@ -100,12 +100,12 @@ class Record
 
     /**  For column id  */
     ///Get the value of the column id, returns the default value if the column is null
-    const uint64_t &getValueOfId() const noexcept;
+    const std::string &getValueOfId() const noexcept;
     ///Return a shared_ptr object pointing to the column const value, or an empty shared_ptr object if the column is null
-    const std::shared_ptr<uint64_t> &getId() const noexcept;
+    const std::shared_ptr<std::string> &getId() const noexcept;
     ///Set the value of the column id
-    void setId(const uint64_t &pId) noexcept;
-    void setIdToNull() noexcept;
+    void setId(const std::string &pId) noexcept;
+    void setId(std::string &&pId) noexcept;
 
     /**  For column fromUserId  */
     ///Get the value of the column fromUserId, returns the default value if the column is null
@@ -115,7 +115,6 @@ class Record
     ///Set the value of the column fromUserId
     void setFromuserid(const std::string &pFromuserid) noexcept;
     void setFromuserid(std::string &&pFromuserid) noexcept;
-    void setFromuseridToNull() noexcept;
 
     /**  For column toUserId  */
     ///Get the value of the column toUserId, returns the default value if the column is null
@@ -134,7 +133,6 @@ class Record
     const std::shared_ptr<double> &getBalance() const noexcept;
     ///Set the value of the column balance
     void setBalance(const double &pBalance) noexcept;
-    void setBalanceToNull() noexcept;
 
     /**  For column dealTime  */
     ///Get the value of the column dealTime, returns the default value if the column is null
@@ -143,7 +141,6 @@ class Record
     const std::shared_ptr<uint64_t> &getDealtime() const noexcept;
     ///Set the value of the column dealTime
     void setDealtime(const uint64_t &pDealtime) noexcept;
-    void setDealtimeToNull() noexcept;
 
 
     static size_t getColumnNumber() noexcept {  return 5;  }
@@ -163,7 +160,7 @@ class Record
     void updateArgs(drogon::orm::internal::SqlBinder &binder) const;
     ///For mysql or sqlite3
     void updateId(const uint64_t id);
-    std::shared_ptr<uint64_t> id_;
+    std::shared_ptr<std::string> id_;
     std::shared_ptr<std::string> fromuserid_;
     std::shared_ptr<std::string> touserid_;
     std::shared_ptr<double> balance_;
@@ -183,13 +180,13 @@ class Record
   public:
     static const std::string &sqlForFindingByPrimaryKey()
     {
-        static const std::string sql="";
+        static const std::string sql="select * from " + tableName + " where id = ?";
         return sql;
     }
 
     static const std::string &sqlForDeletingByPrimaryKey()
     {
-        static const std::string sql="";
+        static const std::string sql="delete from " + tableName + " where id = ?";
         return sql;
     }
     std::string sqlForInserting(bool &needSelection) const

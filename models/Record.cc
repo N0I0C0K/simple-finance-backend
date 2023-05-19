@@ -18,16 +18,16 @@ const std::string Record::Cols::_fromUserId = "fromUserId";
 const std::string Record::Cols::_toUserId = "toUserId";
 const std::string Record::Cols::_balance = "balance";
 const std::string Record::Cols::_dealTime = "dealTime";
-const std::string Record::primaryKeyName = "";
-const bool Record::hasPrimaryKey = false;
+const std::string Record::primaryKeyName = "id";
+const bool Record::hasPrimaryKey = true;
 const std::string Record::tableName = "record";
 
 const std::vector<typename Record::MetaData> Record::metaData_={
-{"id","uint64_t","integer",8,0,0,0},
-{"fromUserId","std::string","text",0,0,0,0},
+{"id","std::string","text",0,0,1,1},
+{"fromUserId","std::string","text",0,0,0,1},
 {"toUserId","std::string","text",0,0,0,0},
-{"balance","double","real",8,0,0,0},
-{"dealTime","uint64_t","integer",8,0,0,0}
+{"balance","double","real",8,0,0,1},
+{"dealTime","uint64_t","integer unsigned",8,0,0,1}
 };
 const std::string &Record::getColumnName(size_t index) noexcept(false)
 {
@@ -40,7 +40,7 @@ Record::Record(const Row &r, const ssize_t indexOffset) noexcept
     {
         if(!r["id"].isNull())
         {
-            id_=std::make_shared<uint64_t>(r["id"].as<uint64_t>());
+            id_=std::make_shared<std::string>(r["id"].as<std::string>());
         }
         if(!r["fromUserId"].isNull())
         {
@@ -71,7 +71,7 @@ Record::Record(const Row &r, const ssize_t indexOffset) noexcept
         index = offset + 0;
         if(!r[index].isNull())
         {
-            id_=std::make_shared<uint64_t>(r[index].as<uint64_t>());
+            id_=std::make_shared<std::string>(r[index].as<std::string>());
         }
         index = offset + 1;
         if(!r[index].isNull())
@@ -109,7 +109,7 @@ Record::Record(const Json::Value &pJson, const std::vector<std::string> &pMasque
         dirtyFlag_[0] = true;
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<uint64_t>((uint64_t)pJson[pMasqueradingVector[0]].asUInt64());
+            id_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -153,7 +153,7 @@ Record::Record(const Json::Value &pJson) noexcept(false)
         dirtyFlag_[0]=true;
         if(!pJson["id"].isNull())
         {
-            id_=std::make_shared<uint64_t>((uint64_t)pJson["id"].asUInt64());
+            id_=std::make_shared<std::string>(pJson["id"].asString());
         }
     }
     if(pJson.isMember("fromUserId"))
@@ -200,10 +200,9 @@ void Record::updateByMasqueradedJson(const Json::Value &pJson,
     }
     if(!pMasqueradingVector[0].empty() && pJson.isMember(pMasqueradingVector[0]))
     {
-        dirtyFlag_[0] = true;
         if(!pJson[pMasqueradingVector[0]].isNull())
         {
-            id_=std::make_shared<uint64_t>((uint64_t)pJson[pMasqueradingVector[0]].asUInt64());
+            id_=std::make_shared<std::string>(pJson[pMasqueradingVector[0]].asString());
         }
     }
     if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
@@ -244,10 +243,9 @@ void Record::updateByJson(const Json::Value &pJson) noexcept(false)
 {
     if(pJson.isMember("id"))
     {
-        dirtyFlag_[0] = true;
         if(!pJson["id"].isNull())
         {
-            id_=std::make_shared<uint64_t>((uint64_t)pJson["id"].asUInt64());
+            id_=std::make_shared<std::string>(pJson["id"].asString());
         }
     }
     if(pJson.isMember("fromUserId"))
@@ -284,26 +282,31 @@ void Record::updateByJson(const Json::Value &pJson) noexcept(false)
     }
 }
 
-const uint64_t &Record::getValueOfId() const noexcept
+const std::string &Record::getValueOfId() const noexcept
 {
-    const static uint64_t defaultValue = uint64_t();
+    const static std::string defaultValue = std::string();
     if(id_)
         return *id_;
     return defaultValue;
 }
-const std::shared_ptr<uint64_t> &Record::getId() const noexcept
+const std::shared_ptr<std::string> &Record::getId() const noexcept
 {
     return id_;
 }
-void Record::setId(const uint64_t &pId) noexcept
+void Record::setId(const std::string &pId) noexcept
 {
-    id_ = std::make_shared<uint64_t>(pId);
+    id_ = std::make_shared<std::string>(pId);
     dirtyFlag_[0] = true;
 }
-void Record::setIdToNull() noexcept
+void Record::setId(std::string &&pId) noexcept
 {
-    id_.reset();
+    id_ = std::make_shared<std::string>(std::move(pId));
     dirtyFlag_[0] = true;
+}
+const typename Record::PrimaryKeyType & Record::getPrimaryKey() const
+{
+    assert(id_);
+    return *id_;
 }
 
 const std::string &Record::getValueOfFromuserid() const noexcept
@@ -325,11 +328,6 @@ void Record::setFromuserid(const std::string &pFromuserid) noexcept
 void Record::setFromuserid(std::string &&pFromuserid) noexcept
 {
     fromuserid_ = std::make_shared<std::string>(std::move(pFromuserid));
-    dirtyFlag_[1] = true;
-}
-void Record::setFromuseridToNull() noexcept
-{
-    fromuserid_.reset();
     dirtyFlag_[1] = true;
 }
 
@@ -376,11 +374,6 @@ void Record::setBalance(const double &pBalance) noexcept
     balance_ = std::make_shared<double>(pBalance);
     dirtyFlag_[3] = true;
 }
-void Record::setBalanceToNull() noexcept
-{
-    balance_.reset();
-    dirtyFlag_[3] = true;
-}
 
 const uint64_t &Record::getValueOfDealtime() const noexcept
 {
@@ -396,11 +389,6 @@ const std::shared_ptr<uint64_t> &Record::getDealtime() const noexcept
 void Record::setDealtime(const uint64_t &pDealtime) noexcept
 {
     dealtime_ = std::make_shared<uint64_t>(pDealtime);
-    dirtyFlag_[4] = true;
-}
-void Record::setDealtimeToNull() noexcept
-{
-    dealtime_.reset();
     dirtyFlag_[4] = true;
 }
 
@@ -568,7 +556,7 @@ Json::Value Record::toJson() const
     Json::Value ret;
     if(getId())
     {
-        ret["id"]=(Json::UInt64)getValueOfId();
+        ret["id"]=getValueOfId();
     }
     else
     {
@@ -619,7 +607,7 @@ Json::Value Record::toMasqueradedJson(
         {
             if(getId())
             {
-                ret[pMasqueradingVector[0]]=(Json::UInt64)getValueOfId();
+                ret[pMasqueradingVector[0]]=getValueOfId();
             }
             else
             {
@@ -675,7 +663,7 @@ Json::Value Record::toMasqueradedJson(
     LOG_ERROR << "Masquerade failed";
     if(getId())
     {
-        ret["id"]=(Json::UInt64)getValueOfId();
+        ret["id"]=getValueOfId();
     }
     else
     {
@@ -723,10 +711,20 @@ bool Record::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(0, "id", pJson["id"], err, true))
             return false;
     }
+    else
+    {
+        err="The id column cannot be null";
+        return false;
+    }
     if(pJson.isMember("fromUserId"))
     {
         if(!validJsonOfField(1, "fromUserId", pJson["fromUserId"], err, true))
             return false;
+    }
+    else
+    {
+        err="The fromUserId column cannot be null";
+        return false;
     }
     if(pJson.isMember("toUserId"))
     {
@@ -738,10 +736,20 @@ bool Record::validateJsonForCreation(const Json::Value &pJson, std::string &err)
         if(!validJsonOfField(3, "balance", pJson["balance"], err, true))
             return false;
     }
+    else
+    {
+        err="The balance column cannot be null";
+        return false;
+    }
     if(pJson.isMember("dealTime"))
     {
         if(!validJsonOfField(4, "dealTime", pJson["dealTime"], err, true))
             return false;
+    }
+    else
+    {
+        err="The dealTime column cannot be null";
+        return false;
     }
     return true;
 }
@@ -762,6 +770,11 @@ bool Record::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(0, pMasqueradingVector[0], pJson[pMasqueradingVector[0]], err, true))
                   return false;
           }
+        else
+        {
+            err="The " + pMasqueradingVector[0] + " column cannot be null";
+            return false;
+        }
       }
       if(!pMasqueradingVector[1].empty())
       {
@@ -770,6 +783,11 @@ bool Record::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(1, pMasqueradingVector[1], pJson[pMasqueradingVector[1]], err, true))
                   return false;
           }
+        else
+        {
+            err="The " + pMasqueradingVector[1] + " column cannot be null";
+            return false;
+        }
       }
       if(!pMasqueradingVector[2].empty())
       {
@@ -786,6 +804,11 @@ bool Record::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(3, pMasqueradingVector[3], pJson[pMasqueradingVector[3]], err, true))
                   return false;
           }
+        else
+        {
+            err="The " + pMasqueradingVector[3] + " column cannot be null";
+            return false;
+        }
       }
       if(!pMasqueradingVector[4].empty())
       {
@@ -794,6 +817,11 @@ bool Record::validateMasqueradedJsonForCreation(const Json::Value &pJson,
               if(!validJsonOfField(4, pMasqueradingVector[4], pJson[pMasqueradingVector[4]], err, true))
                   return false;
           }
+        else
+        {
+            err="The " + pMasqueradingVector[4] + " column cannot be null";
+            return false;
+        }
       }
     }
     catch(const Json::LogicError &e)
@@ -809,6 +837,11 @@ bool Record::validateJsonForUpdate(const Json::Value &pJson, std::string &err)
     {
         if(!validJsonOfField(0, "id", pJson["id"], err, false))
             return false;
+    }
+    else
+    {
+        err = "The value of primary key must be set in the json object for update";
+        return false;
     }
     if(pJson.isMember("fromUserId"))
     {
@@ -847,6 +880,11 @@ bool Record::validateMasqueradedJsonForUpdate(const Json::Value &pJson,
           if(!validJsonOfField(0, pMasqueradingVector[0], pJson[pMasqueradingVector[0]], err, false))
               return false;
       }
+    else
+    {
+        err = "The value of primary key must be set in the json object for update";
+        return false;
+    }
       if(!pMasqueradingVector[1].empty() && pJson.isMember(pMasqueradingVector[1]))
       {
           if(!validJsonOfField(1, pMasqueradingVector[1], pJson[pMasqueradingVector[1]], err, false))
@@ -886,9 +924,10 @@ bool Record::validJsonOfField(size_t index,
         case 0:
             if(pJson.isNull())
             {
-                return true;
+                err="The " + fieldName + " column cannot be null";
+                return false;
             }
-            if(!pJson.isUInt64())
+            if(!pJson.isString())
             {
                 err="Type error in the "+fieldName+" field";
                 return false;
@@ -897,7 +936,8 @@ bool Record::validJsonOfField(size_t index,
         case 1:
             if(pJson.isNull())
             {
-                return true;
+                err="The " + fieldName + " column cannot be null";
+                return false;
             }
             if(!pJson.isString())
             {
@@ -919,7 +959,8 @@ bool Record::validJsonOfField(size_t index,
         case 3:
             if(pJson.isNull())
             {
-                return true;
+                err="The " + fieldName + " column cannot be null";
+                return false;
             }
             if(!pJson.isNumeric())
             {
@@ -930,7 +971,8 @@ bool Record::validJsonOfField(size_t index,
         case 4:
             if(pJson.isNull())
             {
-                return true;
+                err="The " + fieldName + " column cannot be null";
+                return false;
             }
             if(!pJson.isUInt64())
             {
