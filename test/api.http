@@ -1,7 +1,7 @@
 @baseurl= http://127.0.0.1:6110
 @username= test1
 @password= 123
-@token = BA946FEA-9F01-4088-82EE-8EA631C81D10
+@token = B02AF537-328B-4A92-9FA6-D5633477DEA5
 
 
 ###
@@ -47,3 +47,7 @@ token: {{token}}
 {
     "money":100
 }
+
+###
+GET {{baseurl}}/api/record/list
+token: {{token}}

@@ -122,14 +122,15 @@ public:
         auto from = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, fromUser));
         add_user_balance(from, -money);
         mp.update(from);
-
+        std::string toUserId = "";
         if (toUser.length() != 0) {
             auto to = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, toUser));
             add_user_balance(to, money);
             mp.update(to);
+            toUserId = *to.getId();
         }
 
-        new_record(fromUser, money, std::format("{} 转账给 {} {}", fromUser, toUser.length() == 0 ? "外部" : toUser, money), toUser);
+        new_record(*from.getId(), money, std::format("{} 转账给 {} {}", fromUser, toUser.length() == 0 ? "外部" : toUser, money), toUserId);
     }
 
     void userSaveMoney(const string& username, double money)
@@ -144,7 +145,7 @@ public:
         auto user = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, username));
         add_user_balance(user, money);
         mp.update(user);
-        new_record(username, money, std::format("{} 存入 {}", username, money), "");
+        new_record(*user.getId(), money, std::format("{} 存入 {}", username, money), "");
     }
 
     void userWithdrawMoney(const string& username, double money)
@@ -162,7 +163,7 @@ public:
         }
         add_user_balance(user, -money);
         mp.update(user);
-        new_record(username, money, std::format("{} 取出 {}", username, money), "");
+        new_record(*user.getId(), money, std::format("{} 取出 {}", username, money), "");
     }
 
     void calculateInterest(drogon_model::sqlite3::User& user)
@@ -188,7 +189,7 @@ public:
             user.setBalance(*user.getBalance() + inter);
             user.setInterest(0);
             mp.update(user);
-            new_record(*user.getUsername(), inter, std::format("{} 利息结算 {}", *user.getUsername(), inter), "");
+            new_record(*user.getId(), inter, std::format("{} 利息结算 {}", *user.getUsername(), inter), "");
         }
     }
 
@@ -208,5 +209,6 @@ public:
         new_record.setComment(commeny);
         new_record.setDealtime(time(nullptr));
         mp.insert(new_record);
+        LOG_DEBUG << "new record: " << Json::FastWriter().write(new_record.toJson());
     }
 };
