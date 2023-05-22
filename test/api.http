@@ -5,7 +5,13 @@
 
 
 ###
-GET {{baseurl}}/api/user/login?username={{username}}&password={{password}}
+POST {{baseurl}}/api/user/login
+content-type: application/json
+
+{
+    "username": "test1",
+    "password": "123"
+}
 
 ###
 

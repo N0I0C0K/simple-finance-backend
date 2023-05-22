@@ -12,7 +12,7 @@ void JsonBodyRequired::doFilter(const HttpRequestPtr& req,
     FilterCallback&& fcb,
     FilterChainCallback&& fccb)
 {
-    if (req->getJsonObject() != nullptr) {
+    if (req->getJsonObject() != nullptr || req->getMethod() == Options) {
         fccb();
         return;
     }

@@ -13,6 +13,10 @@ void TokenRequired::doFilter(const HttpRequestPtr& req,
     FilterCallback&& fcb,
     FilterChainCallback&& fccb)
 {
+    if (req->getMethod() == Options) {
+        fccb();
+        return;
+    }
 
     auto token = req->getHeader("token");
     if (token.length() == 0 || !UserManager::instance()->verify_token(token)) {

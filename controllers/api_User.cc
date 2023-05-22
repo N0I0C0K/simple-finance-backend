@@ -5,11 +5,21 @@
 // Add definition of your processing function here
 namespace api {
 
+void User::verify_token(
+    const HttpRequestPtr& req,
+    std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    auto res = HttpResponse::newHttpResponse();
+    res->setStatusCode(k200OK);
+    callback(res);
+}
+
 void User::login(
     const HttpRequestPtr& req,
     std::function<void(const HttpResponsePtr&)>&& callback)
 {
-    std::string username = req->getParameter("username"), password = req->getParameter("password");
+    auto jsonbody = *req->getJsonObject();
+    std::string username = jsonbody["username"].asString(), password = jsonbody["password"].asString();
     LOG_DEBUG << username << password;
     if (username.length() == 0 || password.length() == 0) {
         callback(badRequest());
@@ -75,9 +85,9 @@ void User::money_deal(
     }
     auto&& json = *(jsonptr);
     auto fromUser = UserManager::instance()->get_user(req->getHeader("token"));
-    string toUser = "";
-    if (json.isMember("toUser")) {
-        toUser = json["toUser"].asString();
+    string toUserId = "";
+    if (json.isMember("toUserId")) {
+        toUserId = json["toUserId"].asString();
     }
     auto money = json["money"].asDouble();
 
@@ -87,7 +97,7 @@ void User::money_deal(
     }
 
     try {
-        UserManager::instance()->money_deal(*fromUser.getUsername(), toUser, money);
+        UserManager::instance()->money_deal(*fromUser.getId(), toUserId, money);
     } catch (const std::exception& e) {
         LOG_DEBUG << e.what();
         callback(badRequest(e.what()));

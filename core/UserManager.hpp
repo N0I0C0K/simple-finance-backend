@@ -110,7 +110,7 @@ public:
     /// @param fromUser 来自用户
     /// @param toUser 转去用户, 空为转出本系统
     /// @param money 转账金额
-    void money_deal(const string& fromUser, const string& toUser, double money)
+    void money_deal(const string& fromUserId, const string& toUserId, double money)
     {
         if (money < 0) {
             throw exception("money must be positive");
@@ -119,18 +119,16 @@ public:
         using DUser = drogon_model::sqlite3::User;
         auto db = drogon::app().getDbClient();
         Mapper<DUser> mp(db);
-        auto from = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, fromUser));
+        auto from = mp.findOne(Criteria(DUser::Cols::_id, CompareOperator::EQ, fromUserId));
         add_user_balance(from, -money);
         mp.update(from);
-        std::string toUserId = "";
-        if (toUser.length() != 0) {
-            auto to = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, toUser));
+        if (toUserId.length() != 0) {
+            auto to = mp.findOne(Criteria(DUser::Cols::_id, CompareOperator::EQ, toUserId));
             add_user_balance(to, money);
             mp.update(to);
-            toUserId = *to.getId();
         }
 
-        new_record(*from.getId(), money, std::format("{} 转账给 {} {}", fromUser, toUser.length() == 0 ? "外部" : toUser, money), toUserId);
+        new_record(*from.getId(), money, std::format("转账给 {} {}", toUserId.length() == 0 ? "外部" : toUserId, money), toUserId);
     }
 
     void userSaveMoney(const string& username, double money)
