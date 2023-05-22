@@ -87,6 +87,10 @@ file(COPY ${PROJECT_SOURCE_DIR}/server.db
     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
 )
 
+file(COPY ${PROJECT_SOURCE_DIR}/web
+    DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
+)
+
 # ##############################################################################
 # uncomment the following line for dynamically loading views
 # set_property(TARGET ${PROJECT_NAME} PROPERTY ENABLE_EXPORTS ON)

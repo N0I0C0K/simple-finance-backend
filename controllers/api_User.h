@@ -8,6 +8,7 @@ class User : public drogon::HttpController<User> {
 public:
     METHOD_LIST_BEGIN
     METHOD_ADD(User::login, "/login", Post, Options, "JsonBodyRequired");
+    METHOD_ADD(User::logout, "/logout", Get, Options, "TokenRequired");
     METHOD_ADD(User::verify_token, "/verify_token", Get, Options, "TokenRequired");
     METHOD_ADD(User::register_user, "/register", Post, Options, "JsonBodyRequired");
     METHOD_ADD(User::user_info, "/info", Get, Options, "TokenRequired");
@@ -20,6 +21,9 @@ public:
         std::function<void(const HttpResponsePtr&)>&& callback);
 
     void login(const HttpRequestPtr& req,
+        std::function<void(const HttpResponsePtr&)>&& callback);
+
+    void logout(const HttpRequestPtr& req,
         std::function<void(const HttpResponsePtr&)>&& callback);
 
     void register_user(const HttpRequestPtr& req,

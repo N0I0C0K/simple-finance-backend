@@ -8,17 +8,12 @@ namespace api {
 class Record : public drogon::HttpController<Record> {
 public:
     METHOD_LIST_BEGIN
-    // use METHOD_ADD to add your custom processing function here;
-    // METHOD_ADD(Record::get, "/{2}/{1}", Get); // path is /api/Record/{arg2}/{arg1}
-    // METHOD_ADD(Record::your_method_name, "/{1}/{2}/list", Get); // path is /api/Record/{arg1}/{arg2}/list
-    // ADD_METHOD_TO(Record::your_method_name, "/absolute/path/{1}/{2}/list", Get); // path is /absolute/path/{arg1}/{arg2}/list
     METHOD_ADD(Record::get_record_list, "/list", Get, Options, "TokenRequired");
-
+    METHOD_ADD(Record::get_this_month_info, "/this_month_summary", Get, Options, "TokenRequired");
     METHOD_LIST_END
-    // your declaration of processing function maybe like this:
-    // void get(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, int p1, std::string p2);
-    // void your_method_name(const HttpRequestPtr& req, std::function<void (const HttpResponsePtr &)> &&callback, double p1, int p2) const;
     void get_record_list(const HttpRequestPtr& req,
+        std::function<void(const HttpResponsePtr&)>&& callback) const;
+    void get_this_month_info(const HttpRequestPtr& req,
         std::function<void(const HttpResponsePtr&)>&& callback) const;
 };
 }

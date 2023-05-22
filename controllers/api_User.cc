@@ -37,6 +37,17 @@ void User::login(
     }
 }
 
+void User::logout(
+    const HttpRequestPtr& req,
+    std::function<void(const HttpResponsePtr&)>&& callback)
+{
+    auto token = req->getHeader("token");
+    UserManager::instance()->logout(token);
+    auto res = HttpResponse::newHttpResponse();
+    res->setStatusCode(k200OK);
+    callback(res);
+}
+
 void User::user_info(
     const HttpRequestPtr& req,
     std::function<void(const HttpResponsePtr&)>&& callback)

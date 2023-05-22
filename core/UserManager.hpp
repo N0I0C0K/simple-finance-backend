@@ -128,7 +128,7 @@ public:
             mp.update(to);
         }
 
-        new_record(*from.getId(), money, std::format("转账给 {} {}", toUserId.length() == 0 ? "外部" : toUserId, money), toUserId);
+        new_record(*from.getId(), money, std::format("Transfer money to {} {}", toUserId.length() == 0 ? "outside" : toUserId, money), toUserId);
     }
 
     void userSaveMoney(const string& username, double money)
@@ -143,7 +143,7 @@ public:
         auto user = mp.findOne(Criteria(DUser::Cols::_username, CompareOperator::EQ, username));
         add_user_balance(user, money);
         mp.update(user);
-        new_record(*user.getId(), money, std::format("{} 存入 {}", username, money), "");
+        new_record(*user.getId(), money, std::format("deposit {}", money), "");
     }
 
     void userWithdrawMoney(const string& username, double money)
@@ -161,7 +161,7 @@ public:
         }
         add_user_balance(user, -money);
         mp.update(user);
-        new_record(*user.getId(), money, std::format("{} 取出 {}", username, money), "");
+        new_record(*user.getId(), money, std::format("withdraw {}", money), "");
     }
 
     void calculateInterest(drogon_model::sqlite3::User& user)
@@ -187,7 +187,7 @@ public:
             user.setBalance(*user.getBalance() + inter);
             user.setInterest(0);
             mp.update(user);
-            new_record(*user.getId(), inter, std::format("{} 利息结算 {}", *user.getUsername(), inter), "");
+            new_record(*user.getId(), inter, std::format("interest settlement {}", inter), "");
         }
     }
 

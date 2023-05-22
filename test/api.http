@@ -1,7 +1,7 @@
 @baseurl= http://127.0.0.1:6110
 @username= test1
 @password= 123
-@token = B02AF537-328B-4A92-9FA6-D5633477DEA5
+@token = 653ADF7F-FABB-4585-A9C0-8AD0E6091534
 
 
 ###
@@ -51,6 +51,7 @@ content-type: application/json
 token: {{token}}
 
 {
+    "toUserId":"testfakeid",
     "money":100
 }
 
