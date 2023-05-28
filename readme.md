@@ -9,6 +9,9 @@
 - C++20
 - vcpkg
 - cmake
+- nodejs
+
+后端：
 
 1. 安装依赖
    `vcpkg install drogon[core,ctl,sqlite3,orm]`
@@ -17,6 +20,11 @@
    cmake
    cmake --build ./build
    ```
+
+前端：
+
+1. 运行`npm i`
+2. `npm start`
 
 ## 截图
 
